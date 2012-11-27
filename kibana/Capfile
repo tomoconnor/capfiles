@@ -1,0 +1,63 @@
+load 'deploy'
+
+set :application, "kibana"
+set :repository,  "git@github.com:rashidkpc/Kibana.git"
+
+set :scm, :git
+
+default_run_options[:pty] = true
+
+ssh_options[:forward_agent] = true
+set :git_enable_submodules, 1
+set :deploy_via, :remote_cache
+set :use_sudo, false
+
+set :local_user, "deploy"
+set :user, "deploy"
+
+set :deploy_to, "/opt/applications/#{application}"
+
+set :copy_strategy, :export
+set :deploy_via, :rsync_with_remote_cache
+
+set :default_branch, "kibana-ruby"
+
+set :branch, "kibana-ruby"
+
+task :live do
+    role :live, "logstash01", :primary => true
+end
+
+
+namespace :deploy do
+
+    task :migrate do
+        puts "    not doing migrate because not a Rails application."
+    end
+
+    task :finalize_update do
+	run "cd #{latest_release}; sudo bundle install"
+    end
+
+    task :start do
+        puts "    not doing start because not a Rails application."
+    end
+  
+    task :stop do 
+        puts "    not doing stop because not a Rails application."
+    end
+
+    task :restart do
+	run "sudo service kibana restart"
+    end
+
+    task :postinstall, :except=>{:no_release=>true} do
+        template = File.read("config/#{application}.conf.erb")
+        buffer = ERB.new(template).result(binding)
+        put buffer, "#{shared_path}/system/#{application}.conf"
+        run "sudo cp #{shared_path}/system/#{application}.conf /etc/init/#{application}.conf"
+    end
+
+    before "deploy:restart", "deploy:postinstall"
+
+end

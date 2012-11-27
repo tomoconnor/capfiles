@@ -1,0 +1,10 @@
+description "Kibana"
+
+start on runlevel [2345]
+stop on  runlevel [06]
+
+respawn
+
+chdir <%= current_path %>
+
+exec /usr/bin/ruby kibana.rb >> /var/log/logstash/kibana.log
